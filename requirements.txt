@@ -1,0 +1,6 @@
+gpg==1.24.1
+packaging==24.2
+dotenv
+pandas
+tqdm
+google-cloud-bigquery
