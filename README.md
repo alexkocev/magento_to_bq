@@ -38,7 +38,10 @@ TO_DATE = "2025-01-31"                             # End date (YYYY-MM-DD)
 RESET = "False"                                    # Keep as string, not boolean
 ```
 
-3. **Download your BigQuery service account key**
+3. **Set up BigQuery**
+   - Create a dataset named "magento" in BigQuery 
+   - Create two tables within this dataset: "customers" and "orders"
+   - Download your BigQuery service account key
    - Place the JSON key file in the same directory as the script
    - Make sure the path matches the `BQ_PATH_KEY` value in config.py
 
@@ -78,6 +81,7 @@ When prompted, enter the 6-digit OTP code from your Google Authenticator app.
 
 ## Notes
 
+- **Important**: You must create the BigQuery dataset and tables (customers and orders) before running the script
 - The BigQuery service account needs appropriate permissions to create, delete, and modify tables
 - For large data sets, consider using smaller date ranges to avoid timeout issues
 - Magento API rate limits may apply depending on your server configuration
