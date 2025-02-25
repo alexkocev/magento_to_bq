@@ -1,50 +1,84 @@
-# Export Magento Orders to BigQuery
-This script exports order data from Magento to Google BigQuery. It fetches orders between a specified date range, formats the data, and uploads it to BigQuery.
+# Magento to BigQuery Data Sync
+
+This script exports customer and order data from Magento to Google BigQuery. It supports incremental updates, allowing you to keep your BigQuery data synchronized with the latest changes in Magento.
+
+## Features
+
+- Fetch customer and order data from Magento using REST API
+- Support for 2-Factor Authentication (2FA)
+- Incremental data loading to BigQuery (only new or updated records)
+- Full data reset option for BigQuery tables
+- Date range filtering for data extraction
 
 ## Setup
-1. Magento API Access:
 
-- Obtain your Magento Base URL, username, password, and 2FA OTP code for authentication.
-- Set these variables in your environment or .env file:
-    - M2_BASE_URL
-    - M2_USERNAME
-    - M2_PASSWORD
-    - M2_OTP_CODE (6-digit from Google Authenticator)
+1. **Clone the repository**
 
-2. Google Cloud:
-- Set up Google Cloud credentials and BigQuery parameters:
-    - BQ_PATH_KEY (Path to the service account key JSON)
-    - BQ_PROJECT_ID (Google Cloud project ID)
-    - BQ_DATASET_ID (BigQuery dataset ID)
-    - BQ_TABLE_ID (BigQuery table ID)
-- Install the required libraries using:
+2. **Update the config.py file with your actual values:**
+
 ```python
+# Magento API Credentials
+M2_BASE_URL = "https://your-magento-store.com"     # Your Magento store URL
+M2_ACCESS_TOKEN = ""                               # Leave empty, will be generated during runtime
+M2_USERNAME = "your_username"                      # Your Magento admin username
+M2_PASSWORD = "your_password"                      # Your Magento admin password
+
+# BigQuery Credentials and Table Information
+BQ_PATH_KEY = "service-account-key.json"           # Path to BigQuery service account key file
+BQ_PROJECT_ID = "your-project-id"                  # Google Cloud project ID
+BQ_DATASET_ID = "your_dataset"                     # BigQuery dataset ID
+BQ_ORDER_TABLE_ID = "orders"                       # Table for order data
+BQ_CUSTOMER_TABLE_ID = "customers"                 # Table for customer data
+
+# Date Range for Data Fetching
+FROM_DATE = "2025-01-01"                           # Start date (YYYY-MM-DD)
+TO_DATE = "2025-01-31"                             # End date (YYYY-MM-DD)
+
+# Reset BQ Tables (True to reset data in BigQuery, False for incremental load)
+RESET = "False"                                    # Keep as string, not boolean
+```
+
+3. **Download your BigQuery service account key**
+   - Place the JSON key file in the same directory as the script
+   - Make sure the path matches the `BQ_PATH_KEY` value in config.py
+
+4. **Install dependencies**
+```
 pip install -r requirements.txt
 ```
 
-## How it Works
-1. Fetch Orders from Magento:
+## Usage
 
-- The script retrieves order data for a specified date range (from_date and to_date).
-- It supports pagination and continues fetching orders until all data is retrieved.
+Run the script with:
 
-2. Format the Data:
-- The order data is formatted into a structured pandas DataFrame with fields like order ID, customer name, item details, etc.
-
-3. Upload to BigQuery:
-- The formatted data is then uploaded to Google BigQuery using the to_gbq method.
-
-
-## 2FA (Two-Factor Authentication) Support
-The script supports Magento's Google Authenticator 2FA. Ensure you input the correct OTP code each time to generate a new access token.
-Example Usage
-```python
-from_date = "2024-01-01"
-to_date = "2024-01-10"
-fetch_all_orders(from_date, to_date)
+```
+python main.py
 ```
 
+When prompted, enter the 6-digit OTP code from your Google Authenticator app.
+
+## Configuration Details
+
+- **Date Range**: Set `FROM_DATE` and `TO_DATE` in config.py to specify the data extraction period
+- **Incremental Updates**: By default (`RESET = "False"`), the script will only add new records or update existing ones
+- **Full Reset**: Set `RESET = "True"` to delete and recreate the BigQuery tables with fresh data
+
+## How It Works
+
+1. The script authenticates with Magento using your credentials and 2FA code
+2. It fetches customer and order data within the specified date range
+3. For customer data, it processes addresses, attributes, and customer groups
+4. For order data, it extracts order items and payment details
+5. If incremental mode is enabled (default):
+   - New records are added to BigQuery
+   - Existing records are updated only if they've changed
+6. If reset mode is enabled:
+   - The existing tables are dropped and recreated
+   - All fetched data is inserted as new
+
 ## Notes
-- Ensure that your BigQuery dataset and table are set up correctly.
-- Modify the script as needed to adjust the date range and handle different use cases.
+
+- The BigQuery service account needs appropriate permissions to create, delete, and modify tables
+- For large data sets, consider using smaller date ranges to avoid timeout issues
+- Magento API rate limits may apply depending on your server configuration
 - Magento API documentation: https://doc.magentochina.org/swagger/#/salesOrderItemRepositoryV1/salesOrderItemRepositoryV1GetListGet

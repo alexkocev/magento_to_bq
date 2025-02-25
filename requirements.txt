@@ -4,3 +4,4 @@ dotenv
 pandas
 tqdm
 google-cloud-bigquery
+pandas_gbq
